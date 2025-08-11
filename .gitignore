@@ -87,7 +87,7 @@ ehthumbs.db
 Desktop.ini
 
 # Model files
-*.pth
+# *.pth - Now tracked with Git LFS
 *.pkl
 *.h5
 *.weights
