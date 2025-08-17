@@ -103,7 +103,27 @@ def _apply_dynamic_quantization(
     Returns:
         Dynamically quantized model
     """
-    pass
+    print("Applying dynamic quantization...")
+    
+    # Set quantization backend (qnnpack for ARM, fbgemm for x86)
+    available_engines = torch.backends.quantized.supported_engines
+    if 'qnnpack' in available_engines:
+        torch.backends.quantized.engine = 'qnnpack'
+    elif 'fbgemm' in available_engines:
+        torch.backends.quantized.engine = 'fbgemm'
+    else:
+        print(f"Warning: No suitable quantization engine available. Available: {available_engines}")
+        return model  # Return original model if no engine available
+    
+    # Apply dynamic quantization to Linear layers only (Conv2d not supported in dynamic quantization)
+    quantized_model = torch.ao.quantization.quantize_dynamic(
+        model, 
+        {nn.Linear}, 
+        dtype=torch.qint8
+    )
+    
+    print("Dynamic quantization completed.")
+    return quantized_model
                 
 
 # TODO: Implement static quantization, if selected

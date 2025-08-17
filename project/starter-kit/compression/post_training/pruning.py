@@ -47,7 +47,7 @@ def prune_model(
     print(f"Initial model sparsity: {initial_sparsity:.2f}%")
     
     # NOTE: Feel free to implement one or all pruning methods
-    if pruning_method == "l1_unstructured":
+    if pruning_method == "l1_unstructured" or pruning_method == "magnitude":
         _apply_unstructured_pruning(model, modules_to_prune, amount)
     
     elif pruning_method == "random_unstructured":
@@ -73,7 +73,9 @@ def prune_model(
     final_sparsity = calculate_sparsity(model)
     print(f"Final model sparsity: {final_sparsity:.2f}%")
     
-    # 5. TODO: Remove pruning reparameterization to make the pruning permanent
+    # 5. Remove pruning reparameterization to make the pruning permanent
+    for module, param_name in modules_to_prune:
+        prune.remove(module, param_name)
     
     return model
 
@@ -94,7 +96,14 @@ def _apply_unstructured_pruning(
     Returns:
         Pruned model
     """
-    pass
+    print("Applying L1 unstructured pruning...")
+    
+    # Apply L1 unstructured pruning to each module
+    for module, param_name in modules_to_prune:
+        prune.l1_unstructured(module, name=param_name, amount=amount)
+    
+    print(f"L1 unstructured pruning applied to {len(modules_to_prune)} modules")
+    return model
 
 # TODO: Implement random unstructured pruning, if selected
 def _apply_random_unstructured_pruning(
