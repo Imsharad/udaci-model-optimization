@@ -1,0 +1,56 @@
+{
+    "timestamp": "2025-08-18T13:23:14.368006",
+    "models_available": {
+        "baseline": {
+            "path": "models/baseline_mobilenet/checkpoints/model.pth",
+            "size_mb": 5.95,
+            "exists": true
+        },
+        "pruned": {
+            "path": "models/final_submission_pipeline/pruned_model.pth",
+            "size_mb": 5.96,
+            "exists": true
+        },
+        "final_compressed": {
+            "path": "models/final_submission_pipeline/final_compressed_model.pth",
+            "size_mb": 4.24,
+            "exists": true
+        }
+    },
+    "baseline_metrics": {
+        "accuracy": {
+            "top1_acc": 11.1,
+            "top5_acc": 46.3
+        },
+        "per_class_accuracy": {
+            "clock": 0.0,
+            "keyboard": 1.0,
+            "lamp": 1.0,
+            "telephone": 0.0,
+            "television": 1.0,
+            "bed": 54.0,
+            "chair": 1.0,
+            "couch": 6.0,
+            "table": 0.0,
+            "wardrobe": 47.0
+        },
+        "timing": {
+            "cpu": {
+                "total_time_ms": 8366.96481704712,
+                "avg_time_ms": 83.66964817047119,
+                "fps": 11.951765327882917
+            }
+        },
+        "size": {
+            "total_params": 1528106,
+            "trainable_params": 1528106,
+            "model_size_bytes": 6246341,
+            "model_size_mb": 5.956974983215332
+        },
+        "memory": {
+            "peak_memory_mb": null,
+            "allocated_memory_mb": null
+        }
+    },
+    "download_location": "/Users/sharad/Projects/udacity-reviews-hq/projects/udaci-model-optimization/compressed_models"
+}

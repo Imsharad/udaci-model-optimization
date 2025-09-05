@@ -1,0 +1,134 @@
+name: Deploy ML Model to Cloud Run
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'project/starter-kit/**'
+      - 'cloud-run-deployment/**'
+      - '.github/workflows/deploy-model.yml'
+  workflow_dispatch:
+    inputs:
+      model_version:
+        description: 'Model version to deploy'
+        required: false
+        default: 'latest'
+
+env:
+  PROJECT_ID: second-brain-463904
+  REGION: us-central1
+  SERVICE_NAME: udaci-model-optimization
+  AR_REPOSITORY: second-brain
+
+jobs:
+  deploy:
+    name: Deploy ML Model Service
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: 'google-github-actions/setup-gcloud@v2'
+
+      - name: Configure Docker
+        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev
+
+      - name: Set up Docker Buildx (BuildKit)
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and Push Docker image with cache
+        uses: docker/build-push-action@v5
+        with:
+          context: ./cloud-run-deployment
+          file: ./cloud-run-deployment/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.AR_REPOSITORY }}/${{ env.SERVICE_NAME }}:latest
+            ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.AR_REPOSITORY }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
+          cache-from: type=registry,ref=${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.AR_REPOSITORY }}/${{ env.SERVICE_NAME }}:buildcache
+          cache-to: type=registry,ref=${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.AR_REPOSITORY }}/${{ env.SERVICE_NAME }}:buildcache,mode=max
+
+      - name: Get Previous Revision for Rollback
+        id: previous_revision
+        run: |
+          # Get current serving revision before new deployment
+          PREVIOUS_REVISION=$(gcloud run revisions list --service=${{ env.SERVICE_NAME }} --region=${{ env.REGION }} --format='value(metadata.name)' --filter='status.traffic.percent>0' --limit=1 2>/dev/null || echo "")
+          echo "previous_revision=$PREVIOUS_REVISION" >> $GITHUB_OUTPUT
+          echo "Previous revision (for rollback): $PREVIOUS_REVISION"
+
+      - name: Deploy to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ env.SERVICE_NAME }}
+          region: ${{ env.REGION }}
+          image: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.AR_REPOSITORY }}/${{ env.SERVICE_NAME }}:latest
+          env_vars: |
+            MODEL_VERSION=${{ github.event.inputs.model_version || 'latest' }}
+            DEPLOYMENT_SHA=${{ github.sha }}
+
+      - name: Health Check and Smoke Test
+        id: smoke_test
+        run: |
+          echo "Waiting for new revision to be ready..."
+          sleep 30
+          URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} --region ${{ env.REGION }} --format 'value(status.url)')
+          echo "Testing URL: $URL"
+          
+          # Test basic health endpoint
+          echo "=== Testing /health endpoint ==="
+          for i in {1..5}; do
+            STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$URL/health" || echo "0")
+            echo "Attempt $i: Status $STATUS_CODE"
+            
+            if [ "$STATUS_CODE" -eq 200 ]; then
+              echo "✅ Health check passed!"
+              
+              # Optional: Test model inference endpoint
+              echo "=== Testing model inference (if available) ==="
+              INFERENCE_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL/predict" || echo "0")
+              echo "Inference endpoint status: $INFERENCE_STATUS"
+              
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "❌ Health check failed after 5 attempts."
+          exit 1
+
+      - name: Rollback on Failure
+        if: failure() && steps.previous_revision.outputs.previous_revision != ''
+        run: |
+          echo "🔄 Health check failed. Rolling back to previous revision..."
+          PREVIOUS_REV="${{ steps.previous_revision.outputs.previous_revision }}"
+          
+          if [ -n "$PREVIOUS_REV" ]; then
+            echo "Rolling back to revision: $PREVIOUS_REV"
+            
+            # Set traffic to 100% on previous revision
+            gcloud run services update-traffic ${{ env.SERVICE_NAME }} \
+              --to-revisions="$PREVIOUS_REV=100" \
+              --region=${{ env.REGION }}
+            
+            echo "✅ Rollback completed. Previous revision is now serving 100% traffic."
+          else
+            echo "❌ No previous revision found for rollback"
+          fi
+
+      - name: Get Deployment Info
+        run: |
+          SERVICE_URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} --region=${{ env.REGION }} --format='value(status.url)')
+          echo "🎉 ML Model deployed successfully!"
+          echo "🔗 Service URL: $SERVICE_URL"
+          echo "📊 Model Version: ${{ github.event.inputs.model_version || 'latest' }}"
+          echo "🔄 Deployment SHA: ${{ github.sha }}"
