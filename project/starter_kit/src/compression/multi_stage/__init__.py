@@ -1,0 +1,1 @@
+# Multi-stage compression pipeline modules following corrected architecture
