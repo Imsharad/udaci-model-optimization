@@ -1,0 +1,24 @@
+# Use a base image with Python 3.11
+FROM python:3.11-slim
+
+# Set the working directory in the container
+WORKDIR /app
+
+# Copy the project directory into the container
+COPY ./project /app/project
+
+# Copy the cloud-run-deployment directory into the container
+COPY ./cloud-run-deployment /app/cloud-run-deployment
+
+# Set the working directory to the starter_kit, where requirements are
+WORKDIR /app/project/starter_kit
+
+# Install dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install uvicorn
+
+# Set the working directory for running the app
+WORKDIR /app
+
+# Command to run the FastAPI application
+CMD ["uvicorn", "cloud-run-deployment.compression-main:app", "--host", "0.0.0.0", "--port", "8080"]

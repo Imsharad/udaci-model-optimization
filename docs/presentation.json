@@ -1,0 +1,319 @@
+
+{
+  "slides": [
+    {
+      "title": "Model Compression Pipeline: From Bloated to Blazing Fast",
+      "notes": "Welcome everyone. Today we're going to talk about model compression, a critical step in deploying machine learning models to real-world applications."
+    },
+    {
+      "title": "Agenda",
+      "points": [
+        "The 'Why': The Need for Model Optimization",
+        "The 'What': Project Overview & Baseline",
+        "The 'How': Compression Techniques Explored",
+        "The 'Wow': Building a Multi-Stage Pipeline",
+        "The 'Show': Results & Deployment",
+        "The 'Next': Conclusion & Future Work"
+      ]
+    },
+    {
+      "title": "The Need for Speed: Why Model Optimization Matters",
+      "points": [
+        "Deep learning models are growing larger and more complex.",
+        "Edge devices (like IoT and mobile) have limited resources (CPU, memory, power).",
+        "Cloud deployment costs are driven by model size and inference time.",
+        "Faster inference leads to better user experience."
+      ]
+    },
+    {
+      "title": "What is Model Compression?",
+      "points": [
+        "A set of techniques to reduce the size and computational cost of a model.",
+        "Goal: Minimize loss in accuracy while maximizing performance gains.",
+        "Key trade-off: Size vs. Accuracy vs. Latency."
+      ]
+    },
+    {
+      "title": "Key Techniques in Model Compression",
+      "points": [
+        "Pruning: Removing redundant model parameters.",
+        "Quantization: Reducing the precision of model weights.",
+        "Knowledge Distillation: Training a smaller 'student' model to mimic a larger 'teacher' model.",
+        "Graph Optimization: Fusing layers and removing unused operations."
+      ]
+    },
+    {
+      "title": "The Udacity Model Optimization Project",
+      "points": [
+        "A hands-on assignment to apply model compression techniques.",
+        "Goal: Optimize a pre-trained model for a 'smart home' application.",
+        "Focus: Practical application and building an end-to-end pipeline."
+      ]
+    },
+    {
+      "title": "Project Goals & Objectives",
+      "points": [
+        "Establish a baseline for model performance and size.",
+        "Apply at least two compression techniques.",
+        "Create a multi-stage compression pipeline.",
+        "Deploy the final, optimized model.",
+        "Compare the performance of the baseline and final models."
+      ]
+    },
+    {
+      "title": "The Dataset: Household Objects",
+      "points": [
+        "A custom dataset of images of common household items.",
+        "Classes: bed, chair, clock, couch, keyboard, lamp, table, telephone, television, wardrobe.",
+        "A real-world dataset that presents interesting challenges."
+      ]
+    },
+    {
+      "title": "The Baseline Model: MobileNetV2",
+      "points": [
+        "A popular, efficient convolutional neural network architecture.",
+        "Designed for mobile and resource-constrained environments.",
+        "Our starting point for optimization.",
+        "We will measure its accuracy, size, and latency."
+      ]
+    },
+    {
+      "title": "Post-Training Optimization: The 'Low-Hanging Fruit'",
+      "points": [
+        "Techniques applied after the model has been trained.",
+        "No re-training required, making them fast to implement.",
+        "A great first step in the optimization process."
+      ]
+    },
+    {
+      "title": "Technique 1: Graph Optimization",
+      "points": [
+        "Analyzes the model's computational graph.",
+        "Fuses layers (e.g., Conv + BatchNorm + ReLU).",
+        "Removes redundant or unused operations.",
+        "Improves inference speed without affecting accuracy."
+      ]
+    },
+    {
+      "title": "Graph Optimization: How it Works",
+      "image": "path/to/graph_optimization_diagram.png",
+      "notes": "A visual representation of how graph optimization can simplify the model's structure."
+    },
+    {
+      "title": "Technique 2: Post-Training Pruning",
+      "points": [
+        "Removing weights or connections that have little impact on the model's output.",
+        "Structured vs. Unstructured Pruning.",
+        "We used unstructured pruning to remove individual weights."
+      ]
+    },
+    {
+      "title": "Pruning: How it Works",
+      "image": "path/to/pruning_diagram.png",
+      "notes": "A diagram showing how pruning removes connections from a neural network."
+    },
+    {
+      "title": "Our Pruning Strategy",
+      "points": [
+        "We used a magnitude-based pruning approach.",
+        "Weights with the smallest absolute values were removed.",
+        "We experimented with different sparsity levels to find the right balance."
+      ]
+    },
+    {
+      "title": "Technique 3: Post-Training Quantization",
+      "points": [
+        "Reducing the numerical precision of the model's weights and activations.",
+        "Typically from 32-bit floating point (FP32) to 8-bit integer (INT8).",
+        "Leads to significant reduction in model size and faster inference."
+      ]
+    },
+    {
+      "title": "Quantization: How it Works",
+      "image": "path/to/quantization_diagram.png",
+      "notes": "A visual explanation of how quantization maps a wide range of floating-point values to a smaller set of integer values."
+    },
+    {
+      "title": "Our Quantization Strategy",
+      "points": [
+        "We used dynamic post-training quantization.",
+        "The quantization parameters are calculated on-the-fly.",
+        "Easy to implement and provides good results."
+      ]
+    },
+    {
+      "title": "Post-Training Results: A Quick Win",
+      "points": [
+        "We saw a significant reduction in model size.",
+        "Latency was also improved.",
+        "However, there was a noticeable drop in accuracy."
+      ]
+    },
+    {
+      "title": "Challenges with Post-Training Methods",
+      "points": [
+        "Accuracy can suffer, especially with aggressive optimization.",
+        "Limited in the amount of compression that can be achieved.",
+        "This is where in-training optimization comes in."
+      ]
+    },
+    {
+      "title": "In-Training Optimization: Squeezing for More Performance",
+      "points": [
+        "Integrating compression techniques into the training process.",
+        "Allows the model to adapt to the changes, preserving accuracy.",
+        "More complex and time-consuming, but more powerful."
+      ]
+    },
+    {
+      "title": "Technique 4: Quantization-Aware Training (QAT)",
+      "points": [
+        "Simulates the effects of quantization during training.",
+        "The model learns to be robust to the reduced precision.",
+        "Results in higher accuracy than post-training quantization."
+      ]
+    },
+    {
+      "title": "QAT: How it Works",
+      "points": [
+        "Fake quantization nodes are inserted into the model graph.",
+        "These nodes simulate the quantization and de-quantization process.",
+        "The model's weights are adjusted to minimize the quantization error."
+      ]
+    },
+    {
+      "title": "Technique 5: Pruning-in-Training",
+      "points": [
+        "Gradually removing weights during the training process.",
+        "Allows the model to recover from the removal of connections.",
+        "Can achieve higher levels of sparsity with less accuracy loss."
+      ]
+    },
+    {
+      "title": "Pruning-in-Training: How it Works",
+      "points": [
+        "A pruning schedule is defined (e.g., start pruning at epoch X).",
+        "The model is fine-tuned after each pruning step.",
+        "This helps the remaining weights to compensate for the removed ones."
+      ]
+    },
+    {
+      "title": "Technique 6: Knowledge Distillation",
+      "points": [
+        "A powerful technique for model compression and transfer learning.",
+        "A smaller 'student' model is trained to mimic a larger 'teacher' model.",
+        "The student learns from the teacher's 'soft labels' (class probabilities)."
+      ]
+    },
+    {
+      "title": "Knowledge Distillation: Teacher-Student Paradigm",
+      "image": "path/to/distillation_diagram.png",
+      "notes": "A diagram illustrating the teacher-student relationship in knowledge distillation."
+    },
+    {
+      "title": "Our Teacher and Student Models",
+      "points": [
+        "Teacher: The original, un-optimized MobileNetV2 model.",
+        "Student: A smaller, compressed version of the MobileNetV2 model.",
+        "The student learns to generalize better by mimicking the teacher."
+      ]
+    },
+    {
+      "title": "Building the Multi-Stage Compression Pipeline",
+      "points": [
+        "Combining multiple techniques to achieve maximum compression.",
+        "The output of one stage becomes the input to the next.",
+        "Our pipeline consists of three stages."
+      ]
+    },
+    {
+      "title": "Pipeline Stage 1: Pruning",
+      "points": [
+        "We start by pruning the model to the desired sparsity.",
+        "This creates a smaller, more compact model to work with."
+      ]
+    },
+    {
+      "title": "Pipeline Stage 2: Quantization-Aware Training",
+      "points": [
+        "We then apply QAT to the pruned model.",
+        "This further reduces the model size and improves latency.",
+        "The model is fine-tuned to recover any accuracy lost during pruning."
+      ]
+    },
+    {
+      "title": "Pipeline Stage 3: Knowledge Distillation",
+      "points": [
+        "Finally, we use knowledge distillation to further boost the accuracy.",
+        "The pruned and quantized model acts as the student.",
+        "The original baseline model is the teacher."
+      ]
+    },
+    {
+      "title": "The Final Compressed Model",
+      "points": [
+        "The output of our pipeline is a highly optimized model.",
+        "It is significantly smaller and faster than the baseline.",
+        "And it maintains a high level of accuracy."
+      ]
+    },
+    {
+      "title": "Pipeline Results: Size, Latency, Accuracy",
+      "points": [
+        "A table comparing the baseline and final models.",
+        "Metric | Baseline | Compressed | Improvement",
+        "---|---|---|---",
+        "Size (MB) | X | Y | Z%",
+        "Latency (ms) | A | B | C%",
+        "Accuracy (%) | P | Q | R%"
+      ],
+      "notes": "Replace X, Y, Z, A, B, C, P, Q, R with the actual values from the project."
+    },
+    {
+      "title": "Deploying the Optimized Model",
+      "points": [
+        "The final step is to deploy our model to a production environment.",
+        "We chose to deploy it as a web service on Google Cloud Run.",
+        "This allows us to easily access the model via a REST API."
+      ]
+    },
+    {
+      "title": "Deployment on Google Cloud Run",
+      "points": [
+        "We containerized our application using Docker.",
+        "The container includes the model and a simple Flask API.",
+        "We then deployed the container to Cloud Run, which handles scaling automatically."
+      ]
+    },
+    {
+      "title": "Final Results: Baseline vs. Compressed",
+      "points": [
+        "A final, comprehensive comparison of the two models.",
+        "Highlighting the massive improvements in size and latency.",
+        "While maintaining a very respectable accuracy."
+      ]
+    },
+    {
+      "title": "Key Learnings & Takeaways",
+      "points": [
+        "Model optimization is a crucial skill for any machine learning engineer.",
+        "There is a clear trade-off between model size, latency, and accuracy.",
+        "A multi-stage pipeline can achieve better results than any single technique.",
+        "Post-training methods are fast, but in-training methods are more powerful."
+      ]
+    },
+    {
+      "title": "Future Work & Possible Improvements",
+      "points": [
+        "Explore other compression techniques like tensor decomposition.",
+        "Experiment with different model architectures.",
+        "Automate the hyperparameter tuning for the compression pipeline.",
+        "Deploy the model to an actual edge device (e.g., Raspberry Pi)."
+      ]
+    },
+    {
+      "title": "Q&A",
+      "notes": "Thank you for your attention. I'm now happy to answer any questions you may have."
+    }
+  ]
+}

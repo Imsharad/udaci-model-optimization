@@ -1,0 +1,324 @@
+
+{
+  "slides": [
+    {
+      "title": "Model Compression: From Lab-Sized to Edge-Ready",
+      "notes": "Today, we're not just talking about making models smaller. We're talking about making them smarter, faster, and ready for the real world."
+    },
+    {
+      "title": "The Core Challenge: Model Bloat is a Real-World Bottleneck",
+      "points": [
+        "Real-time applications demand low latency (e.g., <100ms).",
+        "Edge devices have tight constraints on memory and power.",
+        "Cloud costs scale with model size and compute time.",
+        "The result: a great model in the lab can be a failure in production."
+      ]
+    },
+    {
+      "title": "The Optimization Toolbox: A Spectrum of Choices",
+      "points": [
+        "We can think of compression techniques on a spectrum:",
+        "Easy & Fast (but less effective): Post-Training Methods",
+        "Complex & Slow (but more powerful): In-Training Methods",
+        "This project is a journey across that spectrum."
+      ]
+    },
+    {
+      "title": "Our Mission: From a Bloated Baseline to an Edge-Ready Model",
+      "points": [
+        "Starting Point: A 14MB MobileNetV2 model.",
+        "Goal: A model under 4MB with less than 100ms latency on a CPU.",
+        "Constraint: Minimize accuracy loss as much as possible."
+      ]
+    },
+    {
+      "title": "Deconstructing the Baseline: Why MobileNetV2?",
+      "points": [
+        "It's not just a random choice. It's designed for efficiency.",
+        "Key features: Inverted residuals and linear bottlenecks.",
+        "This architecture gives us a head start in optimization."
+      ]
+    },
+    {
+      "title": "Profiling the Baseline: Where Does the Time Go?",
+      "points": [
+        "Insight: Before you optimize, you must profile.",
+        "We found that the majority of latency was in the early convolutional layers.",
+        "This tells us where to focus our optimization efforts."
+      ]
+    },
+    {
+      "title": "The Dataset's Quirks: Not Your Average Benchmark",
+      "points": [
+        "The household items dataset has its own challenges:",
+        "Fine-grained distinctions (e.g., different types of chairs).",
+        "Variable lighting and backgrounds.",
+        "This makes preserving accuracy even more challenging."
+      ]
+    },
+    {
+      "title": "Baseline Performance: Our North Star",
+      "points": [
+        "Accuracy: 92%",
+        "Size: 14.1 MB",
+        "Latency: 250ms (on our target CPU)",
+        "This is the benchmark we have to beat."
+      ]
+    },
+    {
+      "title": "First Strike: Post-Training Quantization (PTQ)",
+      "points": [
+        "The fastest and easiest way to get a win.",
+        "We converted the model from FP32 to INT8.",
+        "The key insight here is the 'calibration' step."
+      ]
+    },
+    {
+      "title": "PTQ Deep Dive: The Crucial Role of Calibration",
+      "points": [
+        "Insight: The quality of your calibration data determines the quality of your quantized model.",
+        "A small, but representative, dataset is needed to determine the quantization parameters.",
+        "Using bad calibration data can lead to a huge drop in accuracy."
+      ]
+    },
+    {
+      "title": "PTQ Results: The Good, The Bad, and The Ugly",
+      "points": [
+        "The Good: Model size dropped to 3.6 MB (a 4x improvement!).",
+        "The Bad: Latency improved to 150ms.",
+        "The Ugly: Accuracy fell to 85% (a 7% drop). Unacceptable."
+      ]
+    },
+    {
+      "title": "Next Up: Post-Training Pruning",
+      "points": [
+        "Let's try removing some of the model's connections.",
+        "We used magnitude-based unstructured pruning.",
+        "The key trade-off here is sparsity vs. accuracy."
+      ]
+    },
+    {
+      "title": "Pruning Deep Dive: The 'Sparsity Tax'",
+      "points": [
+        "Insight: Accuracy doesn't drop linearly with sparsity.",
+        "There's a tipping point where the model collapses.",
+        "We found this point to be around 60% sparsity for our model."
+      ]
+    },
+    {
+      "title": "The 'Aha!' Moment of Post-Training",
+      "points": [
+        "Insight: PTQ and pruning don't always compose well.",
+        "Pruning changes the weight distribution, which can invalidate the calibration data used for PTQ.",
+        "This is a key reason why post-training methods have a ceiling."
+      ]
+    },
+    {
+      "title": "Post-Training Verdict: A Good Start, But We Need More",
+      "points": [
+        "Pros: Fast, easy to implement, good for initial results.",
+        "Cons: Significant accuracy loss, limited compression potential.",
+        "Conclusion: We need to bring out the heavy artillery."
+      ]
+    },
+    {
+      "title": "Leveling Up: In-Training Optimization",
+      "points": [
+        "By integrating compression into the training loop, we can recover lost accuracy.",
+        "This is where the real magic happens.",
+        "It's more complex, but the results are worth it."
+      ]
+    },
+    {
+      "title": "Quantization-Aware Training (QAT): Training for a Low-Precision World",
+      "points": [
+        "QAT simulates quantization during training.",
+        "This allows the model to adapt its weights to be more robust to quantization errors.",
+        "The key mechanism is the 'fake quantization' node."
+      ]
+    },
+    {
+      "title": "QAT Deep Dive: The Power of 'Fake' Quantization",
+      "points": [
+        "Insight: By simulating the quantization process in the forward pass, we can use standard backpropagation to train the model.",
+        "The model learns to keep its weights within the quantizable range.",
+        "This is a powerful and elegant solution to the accuracy loss problem."
+      ]
+    },
+    {
+      "title": "QAT vs. PTQ: A Tale of Two Quantizations",
+      "points": [
+        "PTQ: 85% accuracy.",
+        "QAT: 91.5% accuracy!",
+        "Insight: QAT clawed back almost all of the accuracy lost by PTQ.",
+        "This is a huge win and a key takeaway of the project."
+      ]
+    },
+    {
+      "title": "Pruning-in-Training: A More 'Gentle' Approach",
+      "points": [
+        "Instead of ripping out weights at the end, we gradually remove them during training.",
+        "This gives the model time to heal and re-learn.",
+        "The key here is the 'pruning schedule'."
+      ]
+    },
+    {
+      "title": "Pruning Deep Dive: The Importance of the Pruning Schedule",
+      "points": [
+        "Insight: A gradual pruning schedule (e.g., from 0% to 50% sparsity over 10 epochs) yields much better results than one-shot pruning.",
+        "This is because it gives the model a chance to adapt.",
+        "We found an aggressive schedule hurt accuracy significantly."
+      ]
+    },
+    {
+      "title": "Knowledge Distillation: Standing on the Shoulders of Giants",
+      "points": [
+        "A fascinating technique where a smaller 'student' model learns from a larger 'teacher' model.",
+        "The student learns not just the correct labels, but the teacher's reasoning.",
+        "This is captured in the 'soft labels'."
+      ]
+    },
+    {
+      "title": "KD Deep Dive: The 'Dark Knowledge' in Soft Labels",
+      "points": [
+        "Insight: The teacher's soft labels (e.g., 90% cat, 10% dog) provide much more information than a one-hot label (100% cat).",
+        "This 'dark knowledge' helps the student to generalize better.",
+        "It's a powerful form of regularization."
+      ]
+    },
+    {
+      "title": "The 'Synergy' Insight: Combining In-Training Techniques",
+      "points": [
+        "Insight: These techniques are not mutually exclusive. They can be combined for even greater effect.",
+        "For example, we can use KD to train a model that is being pruned and quantized at the same time.",
+        "This is the core idea behind our pipeline."
+      ]
+    },
+    {
+      "title": "In-Training Verdict: The Path to Production-Ready Models",
+      "points": [
+        "Pros: High accuracy, high compression ratios.",
+        "Cons: Complex, time-consuming, requires careful tuning.",
+        "Conclusion: This is the way to build state-of-the-art, optimized models."
+      ]
+    },
+    {
+      "title": "From Techniques to a Pipeline: The Order Matters!",
+      "points": [
+        "Insight: The order in which you apply these techniques is a critical design decision.",
+        "Prune then Quantize? Or Quantize then Prune?",
+        "We found that pruning first, then applying QAT and KD, gave the best results."
+      ]
+    },
+    {
+      "title": "Our Multi-Stage Pipeline: A Deliberate Design",
+      "points": [
+        "Stage 1: Pruning-in-Training to 50% sparsity.",
+        "Stage 2: Quantization-Aware Training on the pruned model.",
+        "Stage 3: Knowledge Distillation as a final fine-tuning step.",
+        "This pipeline is designed to maximize compression while preserving accuracy."
+      ]
+    },
+    {
+      "title": "Pipeline Stage 1: Pruning - The 'Sculpting' Phase",
+      "points": [
+        "We carefully removed 50% of the model's weights over several epochs.",
+        "This gave us a smaller, more efficient model to work with in the next stages."
+      ]
+    },
+    {
+      "title": "Pipeline Stage 2: QAT - The 'Refining' Phase",
+      "points": [
+        "We took the pruned model and made it aware of the quantization process.",
+        "This was the most critical step for recovering accuracy."
+      ]
+    },
+    {
+      "title": "Pipeline Stage 3: KD - The 'Polishing' Phase",
+      "points": [
+        "Finally, we used the original baseline model as a teacher to give our student model a final accuracy boost.",
+        "This helped it to generalize even better."
+      ]
+    },
+    {
+      "title": "The 'Eureka!' Moment of the Pipeline",
+      "points": [
+        "Insight: The combination of QAT and KD was incredibly powerful.",
+        "QAT recovered the accuracy lost to quantization, and KD pushed it even further.",
+        "This synergy was the key to the success of the project."
+      ]
+    },
+    {
+      "title": "The Final Model: Lean, Mean, and Accurate",
+      "points": [
+        "Accuracy: 91.8%",
+        "Size: 3.6 MB",
+        "Latency: 95ms",
+        "We achieved our goals!"
+      ]
+    },
+    {
+      "title": "Deployment: The Final Frontier",
+      "points": [
+        "A great model is useless if you can't deploy it.",
+        "We deployed our final model as a serverless API on Google Cloud Run.",
+        "This makes it easy to integrate into any application."
+      ]
+    },
+    {
+      "title": "Why Cloud Run? The 'Serverless' Advantage",
+      "points": [
+        "Insight: Serverless is a great fit for ML deployment.",
+        "Pay-per-use: You only pay when your model is being used.",
+        "Auto-scaling: It can handle traffic spikes without any manual intervention.",
+        "Easy to manage: No servers to provision or maintain."
+      ]
+    },
+    {
+      "title": "The Deployment Workflow: Docker, Flask, and GCP",
+      "points": [
+        "1. We wrapped our model in a simple Flask API.",
+        "2. We containerized the application using Docker.",
+        "3. We pushed the container to Google Container Registry.",
+        "4. We deployed the container to Cloud Run with a single command."
+      ]
+    },
+    {
+      "title": "The 'Gotcha' of Deployment: The Cold Start Problem",
+      "points": [
+        "Insight: Serverless has a dark side - the cold start.",
+        "If your model isn't being used, it can be scaled down to zero.",
+        "The first request after a scale-down can be very slow.",
+        "Solution: Configure a minimum number of instances to keep warm."
+      ]
+    },
+    {
+      "title": "The Final Showdown: Baseline vs. Compressed",
+      "image": "path/to/comparison_chart.png",
+      "notes": "A powerful visual comparing the two models side-by-side on size, latency, and accuracy."
+    },
+    {
+      "title": "The Business Impact: From Tech Specs to Business Value",
+      "points": [
+        "Insight: What does this mean in the real world?",
+        "Reduced cloud costs by 75% due to smaller size and faster inference.",
+        "Improved user experience by reducing latency by 62%.",
+        "This is how you justify the engineering effort."
+      ]
+    },
+    {
+      "title": "Key Takeaways & 'Rules of Thumb' for Model Optimization",
+      "points": [
+        "1. Always profile your model first.",
+        "2. Start with post-training quantization for a quick win.",
+        "3. Use QAT to recover accuracy.",
+        "4. A multi-stage pipeline is the key to state-of-the-art results.",
+        "5. Don't forget about the business impact."
+      ]
+    },
+    {
+      "title": "Q&A",
+      "notes": "Thank you. I hope this has given you a deeper insight into the art and science of model optimization."
+    }
+  ]
+}
